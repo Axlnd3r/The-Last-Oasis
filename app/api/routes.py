@@ -354,7 +354,7 @@ def make_router(app_state: AppState) -> APIRouter:
         import uuid
         spawned = []
 
-        agent_names = ["Explorer_A", "Explorer_B", "Trader_A", "Fighter_A", "Survivor_A"]
+        agent_names = ["DQN_Explorer", "Trader_A", "Belief_Wanderer", "DQN_Survivor", "Random_Fighter"]
 
         for i in range(min(count, 10)):  # Max 10 agents
             agent_id = f"demo_{uuid.uuid4().hex[:8]}"
