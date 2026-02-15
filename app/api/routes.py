@@ -371,9 +371,10 @@ def make_router(app_state: AppState) -> APIRouter:
                 )
                 await insert_entry(
                     app_state.conn,
-                    agent_id=agent_id,
-                    tx_ref=f"demo_{agent_id}",
-                    verified=True
+                    f"demo_{agent_id}",  # tx_ref
+                    agent_id,             # agent_id
+                    "DEMO",              # paid_asset
+                    "0"                  # paid_amount
                 )
 
             # Add agent to world

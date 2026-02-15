@@ -738,12 +738,24 @@ if (finalizeBtn) {
 
 // Add Spawn Demo Agents button functionality
 async function spawnDemoAgents() {
-  const res = await fetch("/admin/spawn-demo-agents?count=5", {
-    method: "POST"
-  });
-  const data = await res.json();
-  alert(`Spawned ${data.spawned} demo agents!\n\nAgents will now explore, trade, and fight in the world. Watch the Live Events panel!`);
-  await refreshAll();
+  try {
+    const res = await fetch("/admin/spawn-demo-agents?count=5", {
+      method: "POST"
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      alert(`Error spawning agents: ${res.status} - ${errorText}`);
+      return;
+    }
+
+    const data = await res.json();
+    alert(`Spawned ${data.spawned} demo agents!\n\nAgents will now explore, trade, and fight in the world. Watch the Live Events panel!`);
+    await refreshAll();
+  } catch (e) {
+    alert(`Error: ${e.message}`);
+    console.error("Spawn demo agents error:", e);
+  }
 }
 
 // Auto-spawn demo agents if world is empty (for judges' convenience)
