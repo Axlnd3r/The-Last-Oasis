@@ -41,6 +41,11 @@ def create_app() -> FastAPI:
         )
         return JSONResponse(status_code=500, content={"detail": "internal_server_error", "request_id": request_id})
 
+    @app.get("/health")
+    async def health():
+        """Simple health check endpoint for Railway/deployment platforms"""
+        return {"status": "ok"}
+
     @app.get("/")
     async def root() -> RedirectResponse:
         return RedirectResponse(url="/dashboard/")

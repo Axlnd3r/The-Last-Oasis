@@ -20,7 +20,7 @@ primary_region = "sea" # Singapore (closest to Indonesia)
     timeout = "5s"
     grace_period = "10s"
     method = "GET"
-    path = "/world/status"
+    path = "/health"
 
 [mounts]
   source = "oasis_data"
