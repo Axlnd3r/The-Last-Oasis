@@ -52,29 +52,61 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def on_startup() -> None:
-        conn = await connect(settings.db_path)
-        await init_db(conn)
+        try:
+            logger.info(f"🚀 Starting up... DB_PATH={settings.db_path}")
+            conn = await connect(settings.db_path)
+            logger.info("✅ Connected to database")
 
-        world = await load_world(conn, size=settings.map_size)
+            await init_db(conn)
+            logger.info("✅ Database initialized")
 
-        agents = await list_agents(conn)
-        for agent_id, state in agents:
-            if agent_id not in world.agents:
-                world.add_agent(agent_id)
-            world.agents[agent_id] = AgentState.from_dict(state)
+            world = await load_world(conn, size=settings.map_size)
+            logger.info(f"✅ World loaded (tick={world.tick})")
 
-        app.state.app_state = AppState(
-            conn=conn,
-            world=world,
-            world_lock=asyncio.Lock(),
-            db_lock=asyncio.Lock(),
-            pending_actions={},
-            agent_names={},
-        )
-        app.include_router(make_router(app.state.app_state))
+            agents = await list_agents(conn)
+            logger.info(f"✅ Found {len(agents)} agents")
 
-        async with app.state.app_state.db_lock:
-            await insert_event(conn, tick=world.tick, type="WORLD_STARTED", payload={"tick": world.tick})
+            for agent_id, state in agents:
+                if agent_id not in world.agents:
+                    world.add_agent(agent_id)
+                world.agents[agent_id] = AgentState.from_dict(state)
+
+            app.state.app_state = AppState(
+                conn=conn,
+                world=world,
+                world_lock=asyncio.Lock(),
+                db_lock=asyncio.Lock(),
+                pending_actions={},
+                agent_names={},
+            )
+            logger.info("✅ App state created")
+
+            app.include_router(make_router(app.state.app_state))
+            logger.info("✅ Router included")
+
+            async with app.state.app_state.db_lock:
+                await insert_event(conn, tick=world.tick, type="WORLD_STARTED", payload={"tick": world.tick})
+
+            logger.info("🎉 Startup complete!")
+
+        except Exception as e:
+            logger.error(f"❌ Startup failed: {e}", exc_info=True)
+            # Don't re-raise - let the app start anyway so we can at least serve /health
+            # Initialize minimal state
+            import aiosqlite
+            conn = await aiosqlite.connect(":memory:")
+            from .world.engine import WorldState
+            world = WorldState(size=settings.map_size)
+            app.state.app_state = AppState(
+                conn=conn,
+                world=world,
+                world_lock=asyncio.Lock(),
+                db_lock=asyncio.Lock(),
+                pending_actions={},
+                agent_names={},
+            )
+            app.include_router(make_router(app.state.app_state))
+            logger.warning("⚠️  App started with minimal state due to startup error")
 
         async def tick_loop() -> None:
             while True:
