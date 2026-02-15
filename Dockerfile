@@ -28,5 +28,5 @@ ENV PORT=8000
 
 EXPOSE $PORT
 
-# Use shell form to allow environment variable expansion
-CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
+# Use exec form with sh -c for proper PORT expansion
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
