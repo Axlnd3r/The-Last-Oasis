@@ -1,0 +1,12 @@
+{
+  "name": "the-last-oasis",
+  "private": true,
+  "workspaces": [
+    "server"
+  ],
+  "scripts": {
+    "dev": "npm --workspace server run dev",
+    "start": "npm --workspace server run start",
+    "sim": "node sim/run.js"
+  }
+}

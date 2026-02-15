@@ -1,0 +1,13 @@
+{
+  "name": "@the-last-oasis/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}

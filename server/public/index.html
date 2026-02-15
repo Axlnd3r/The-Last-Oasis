@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Last Oasis Dashboard (Demo)</title>
+    <style>
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; background: #0b1220; color: #e5e7eb; }
+      header { padding: 16px 20px; border-bottom: 1px solid #1f2937; display: flex; gap: 12px; align-items: center; }
+      main { display: grid; grid-template-columns: 340px 1fr; gap: 16px; padding: 16px 20px; }
+      .card { background: #0f172a; border: 1px solid #1f2937; border-radius: 12px; padding: 12px; }
+      .zones { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+      .zone { border-radius: 10px; padding: 10px; border: 1px solid #243049; min-height: 88px; }
+      .zone.alive { background: rgba(34,197,94,0.12); }
+      .zone.dead { background: rgba(239,68,68,0.10); opacity: 0.8; }
+      .zone h4 { margin: 0 0 6px; font-size: 12px; font-weight: 700; }
+      .zone small { display: block; color: #9ca3af; }
+      .row { display: flex; gap: 8px; align-items: center; }
+      input, button { border-radius: 10px; border: 1px solid #334155; background: #0b1220; color: #e5e7eb; padding: 10px 12px; }
+      button { cursor: pointer; }
+      button:hover { border-color: #60a5fa; }
+      .feed { height: 520px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas; font-size: 12px; }
+      .feed div { padding: 6px 8px; border-bottom: 1px solid #1f2937; }
+      .muted { color: #9ca3af; }
+      .kpi { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .kpi .item { background: #0b1220; border: 1px solid #1f2937; border-radius: 10px; padding: 10px; }
+      .kpi .label { color: #9ca3af; font-size: 12px; }
+      .kpi .value { font-size: 16px; font-weight: 700; margin-top: 4px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <strong>The Last Oasis</strong>
+      <span class="muted">Real-time dashboard (demo)</span>
+    </header>
+    <main>
+      <section class="card">
+        <div class="row">
+          <input id="token" placeholder="Paste Bearer token here" style="flex:1" />
+          <button id="connect">Connect</button>
+        </div>
+        <p class="muted" style="margin:10px 0 0">
+          Dapatkan token dari POST /api/world/enter (demo pakai ?paid=1).
+        </p>
+        <div style="height:12px"></div>
+        <div class="kpi">
+          <div class="item">
+            <div class="label">World Status</div>
+            <div class="value" id="worldStatus">-</div>
+          </div>
+          <div class="item">
+            <div class="label">Next Decay</div>
+            <div class="value" id="nextDecay">-</div>
+          </div>
+        </div>
+        <div style="height:12px"></div>
+        <div class="card" style="padding:0">
+          <div style="padding:10px 12px; border-bottom:1px solid #1f2937; font-weight:700">Activity Feed</div>
+          <div class="feed" id="feed"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div style="font-weight:700; margin-bottom:10px">Zones</div>
+        <div class="zones" id="zones"></div>
+        <div style="height:12px"></div>
+        <div class="card" style="padding:0">
+          <div style="padding:10px 12px; border-bottom:1px solid #1f2937; font-weight:700">Agents (alive)</div>
+          <div id="agents" style="padding:10px 12px" class="muted">-</div>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
+

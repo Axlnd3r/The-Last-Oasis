@@ -1,0 +1,9 @@
+@echo off
+echo Stopping Python processes...
+taskkill /F /IM python.exe /T 2>nul
+
+echo Deleting database...
+if exist data\world.db del /F data\world.db
+
+echo Starting server...
+.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000

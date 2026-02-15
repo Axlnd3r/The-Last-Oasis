@@ -1,0 +1,21 @@
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+pydantic>=2.6.0
+aiosqlite>=0.20.0
+sqlalchemy>=2.0.0
+httpx>=0.26.0
+
+# Core
+fastapi==0.115.12
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+python-dotenv==1.0.1
+aiosqlite==0.20.0
+
+# Blockchain
+web3==7.11.0
+eth-account==0.14.0
+
+# ML/AI (for DQN agent)
+numpy==2.2.3
+torch==2.6.0

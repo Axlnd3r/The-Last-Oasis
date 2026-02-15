@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.so
+.Python
+
+# Environment
+.env
+.env.local
+*.env
+
+# Database
+*.db
+*.sqlite
+data/
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+.claude/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node modules
+node_modules/
+
+# Contracts build artifacts (jangan deploy ke render)
+contracts/artifacts/
+contracts/cache/
+contracts/node_modules/

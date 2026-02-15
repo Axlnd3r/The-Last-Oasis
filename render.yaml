@@ -1,0 +1,38 @@
+services:
+  # FastAPI Backend Service
+  - type: web
+    name: last-oasis-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: HOST
+        value: 0.0.0.0
+      - key: WORLD_SIZE
+        value: 20
+      - key: TICK_INTERVAL_MS
+        value: 1200
+      - key: OBS_RADIUS
+        value: 3
+      - key: SNAPSHOT_EVERY_TICKS
+        value: 10
+      - key: ENTRY_PRICE_ASSET
+        value: USDC
+      - key: ENTRY_PRICE_AMOUNT
+        value: 1.0
+      - key: ENTRY_DEMO_SECRET
+        value: demo
+      - key: DB_PATH
+        value: /opt/render/project/data/world.db
+      - key: CHAIN_RPC_URL
+        sync: false  # Will set manually
+      - key: ENTRY_FEE_CONTRACT_ADDRESS
+        sync: false
+      - key: STATE_ANCHOR_CONTRACT_ADDRESS
+        sync: false
+      - key: ORACLE_PRIVATE_KEY
+        sync: false

@@ -1,0 +1,22 @@
+{
+  "name": "last-oasis-contracts",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "node": "hardhat node",
+    "smoke:local": "hardhat run scripts/smoke_local.ts --network localhost",
+    "deploy:monad": "hardhat run scripts/deploy.ts --network monad",
+    "deploy:monad:testnet": "hardhat run scripts/deploy_monad_testnet.ts --network monad"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@openzeppelin/contracts": "^5.0.2",
+    "@types/node": "^20.11.30",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.11.1",
+    "hardhat": "^2.22.18",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {}
+}

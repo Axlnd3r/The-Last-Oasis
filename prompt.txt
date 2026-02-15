@@ -1,0 +1,258 @@
+Disini saya ingin menambahkan poin-poin penting untuk proyek The Last Oasis berikut ini :
+0) Stack & Struktur Repo (putusan teknis)
+Pilih ini biar cepat dan stabil:
+Backend/API: Python + FastAPI
+Persistence: SQLite (event log + snapshot)
+Agent SDK + examples: Python
+Dashboard: simple web (FastAPI + HTML) atau CLI tail logs (minimal ok)
+Repo structure (yang akan dibuat Codex):
+last-oasis/
+  README.md
+  pyproject.toml (atau requirements.txt)
+  .env.example
+  app/
+    main.py
+    config.py
+    db.py
+    models.py
+    world/
+      engine.py
+      rules.py
+      snapshot.py
+      seed.py
+    api/
+      routes_world.py
+      routes_agent.py
+      routes_admin.py
+    dashboard/
+      templates/
+        index.html
+      static/
+        app.js
+  agents/
+    sdk.py
+    examples/
+      agent_random.py
+      agent_belief_bandit.py
+      agent_trader.py
+  scripts/
+    init_db.py
+    run_server.sh
+    run_agents.sh
+
+
+1) Task: Bootstrap Project & Dependencies
+Codex tasks:
+Create folder structure.
+Setup FastAPI, uvicorn, pydantic, sqlalchemy (atau sqlite3 langsung), python-dotenv.
+Add run_server.sh, init_db.py.
+Terminal commands (Codex jalankan):
+mkdir -p last-oasis/{app/{api,world,dashboard/{templates,static}},agents/examples,scripts}
+cd last-oasis
+python -m venv .venv
+source .venv/bin/activate
+pip install fastapi uvicorn pydantic python-dotenv
+pip install sqlalchemy aiosqlite
+
+
+2) Task: Database Schema (Event Log + Snapshot + Agents)
+Kita butuh persistensi yang bisa direplay.
+Tables (minimum):
+agents (agent_id, name, created_at, balance_mon, is_active)
+entries (entry_id, agent_id, tx_ref, amount_mon, created_at)
+events (event_id, tick, agent_id, action_type, action_json, outcome_json, created_at)
+world_snapshots (snapshot_id, tick, state_json, created_at)
+Codex tasks:
+Implement app/db.py connection + migrations lite (create tables if not exist).
+Implement scripts/init_db.py.
+Acceptance:
+Running python scripts/init_db.py creates sqlite file world.db with tables.
+
+3) Task: World Engine (State, Rules, Tick Loop)
+World harus stateful + rules + non-stationary degradation.
+World model (MVP)
+Map: grid 20x20
+Tiles punya:
+degradation (0..1)
+resource (0..100)
+hazard (0..1)
+Degradation naik tiap tick, resource regen turun seiring degradation.
+Agent state:
+position (x,y)
+hp
+inventory
+last_seen (partial observation cache optional)
+Actions minimal:
+move (dx, dy)
+gather (collect resource)
+rest (recover hp a bit)
+attack (optional; MVP bisa stub)
+trade (optional; MVP can be later)
+Codex tasks:
+app/world/engine.py: holds WorldState, step(tick_actions) produces outcomes + updates state.
+app/world/rules.py: degradation, resource regen, hazards damage.
+app/world/snapshot.py: save snapshot each N ticks.
+app/world/seed.py: deterministic seed for reproducibility.
+Acceptance:
+There’s a tick integer that increments.
+Engine can run 100 ticks with random actions without crashing.
+Snapshots saved every e.g. 10 ticks.
+
+4) Task: Token-Gated Entry (MON via x402) — Hackathon-Friendly
+Kamu ingin “protocol x402”. Implementasi hackathon yang aman:
+MVP approach:
+Endpoint /entry/quote returns entry price in MON + payment instructions (mock).
+Endpoint /entry/confirm accepts tx_ref (string) + agent metadata.
+For now: validate tx_ref format + store entry record.
+(Optional) if you have testnet integration later, swap validator.
+Codex tasks:
+app/api/routes_agent.py:
+POST /entry/quote
+POST /entry/confirm
+agents table gets activated after confirm.
+Acceptance:
+External agent can “pay” by calling confirm and gets agent_id + api_key (simple token) for auth.
+
+5) Task: Public API for External Agents (Query + Submit Actions)
+Core requirement: “Provide API/interface for external agents to query world state and submit actions”
+Endpoints (minimum):
+GET /world/observation (auth required): returns partial observation around agent radius (e.g. 3 tiles)
+POST /world/action (auth required): submit action for next tick
+GET /world/status: tick, global summary (no secrets)
+GET /world/leaderboard: survival time, resources gathered, etc.
+Important: Make world partially observable:
+Agent only sees local neighborhood + last known memory (server returns only local).
+Codex tasks:
+Implement auth middleware: header X-AGENT-TOKEN.
+Store pending actions in memory or db events with tick+1.
+Acceptance:
+3 different agents can call entry → get token → query observation → submit action.
+
+6) Task: Persistence Guarantees (Event Sourcing Lite)
+You must be able to demonstrate: “world state persists and changes logically”.
+Codex tasks:
+Every tick:
+load pending actions
+engine.step(actions)
+write events rows with outcomes
+write snapshot every N ticks
+On server start:
+load latest snapshot
+replay events since snapshot tick to reconstruct state
+Acceptance:
+Stop server, restart, tick continues with same world state.
+
+7) Task: Minimal Dashboard / Logging (Bonus Points)
+Not “pretty”, but “clear”.
+MVP dashboard:
+/dashboard HTML:
+shows current tick
+last 50 events (agent, action, outcome)
+world summary (avg degradation, active agents)
+Optional: grid heatmap later.
+Codex tasks:
+app/dashboard/templates/index.html with simple table.
+app/dashboard/static/app.js poll /admin/events?limit=50 every 2s
+Acceptance:
+Open dashboard in browser and see live events updating.
+
+8) Task: Agent SDK + 3 External Agent Examples (Success Criteria)
+Success criteria requires ≥3 external agents can enter & interact.
+SDK (agents/sdk.py)
+functions:
+entry_confirm()
+get_observation()
+submit_action()
+Example agents
+agent_random.py: baseline random valid actions
+agent_belief_bandit.py: world model:
+keeps belief map of local resource/hazard
+predicts degradation trend (simple)
+chooses strategy via bandit between [explore, gather, rest]
+agent_trader.py (or “cautious_survivor”): prioritizes safe tiles, avoids hazard, tries long survival
+Codex tasks:
+Implement 3 scripts runnable simultaneously.
+Acceptance:
+run_agents.sh starts 3 processes, each enters and plays 200 ticks.
+
+9) Task: “World Model” Proof (What makes it 9/10)
+Juri akan mencari bukti bahwa agent punya model/prediction.
+Codex tasks:
+In agent_belief_bandit.py, log:
+predicted risk of next tile
+chosen strategy + bandit scores
+expected vs actual outcome delta
+Add endpoint /world/metrics summarizing:
+survival time
+resources
+damage taken
+(Optional) show bandit strategy counts on dashboard
+Acceptance:
+Demo can show: agent strategy shifts over time and survives longer than random.
+
+World Model Integration
+
+“Agents that create worlds for other agents to join and interact”
+
+Status: ✅ TERPENUHI (kuat)
+
+Alasan:
+
+Ada persistent world state
+
+Ada defined rules, locations, mechanics
+
+Ada token-gated entry
+
+Ada API untuk agent eksternal
+
+World berevolusi akibat interaksi agent
+
+Secara konsep, ini textbook definition dari world-model agent.
+
+📌 Catatan analis (minor improvement):
+Agar makin jelas di mata juri:
+
+Tegaskan bahwa world bukan sekadar environment pasif, tapi:
+
+punya internal dynamics (economy tick, policy changes, scarcity)
+
+world bisa “bereaksi” tanpa input langsung agent (mis. price drift, event)
+
+Kalimat yang bisa kamu tambahkan di proposal:
+
+“The world maintains autonomous dynamics (price fluctuations, resource regeneration, governance cycles) independent of direct agent actions.”
+
+2️⃣ Agent-to-Agent Transactions
+
+“Protocols enabling economic coordination between agents”
+
+Status: ⚠️ TERPENUHI TAPI IMPLISIT
+
+Di brief kamu:
+
+Ada market
+
+Ada trade
+
+Ada resource exchange
+
+Ada governance/politics
+
+Namun:
+
+Belum secara eksplisit dibilang agent-to-agent, masih bisa terbaca sebagai:
+
+“agent ↔ world (NPC market)”
+
+Supaya 100% lolos kriteria ini, kamu perlu satu hal eksplisit:
+
+✅ Tambahkan direct agent-to-agent interaction layer, misalnya:
+
+Peer-to-peer trade (TRADE_OFFER, TRADE_ACCEPT)
+
+Contract escrow sederhana
+
+Auction / order book antar agent
+
+Negotiation protocol

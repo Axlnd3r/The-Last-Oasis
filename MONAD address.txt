@@ -1,0 +1,24 @@
+MockERC20: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+PrizePool: 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512
+EntryFee: 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0
+Payment verified: paid: true, pool balance: 10000000
+
+0x9Ca59c65BB654f4EF9AAf28bfd1CACd49b9B
+cd e:\MONAD
+$env:CHAIN_RPC_URL="https://monad-testnet.drpc.org"
+$env:ENTRY_FEE_CONTRACT_ADDRESS="0x9Ca59c65BB654f4EF9AAf28bfd1CACd49b9B"
+python -m uvicorn app.main:app --reload --port 8000
+
+export CHAIN_RPC_URL="https://monad-testnet.drpc.org"
+export ENTRY_FEE_CONTRACT_ADDRESS="0x9Ca59c65BB654f4EF9AAf28bfd1CACd49b9B"  
+
+Oracle Address: 0xF0699cA0c464C7100F316C4a76e6f82E53e7840a
+Oracle Private Key: 0xfb552110c893087d33681bf59d10fb0c8134c59405c1290e51474ce4668f7bda
+
+const [deployer] = await ethers.getSigners();
+const tx = await deployer.sendTransaction({
+  to: "0xF0699cA0c464C7100F316C4a76e6f82E53e7840a",  
+  value: ethers.parseEther("0.5")  
+});
+await tx.wait();
+console.log("Funded oracle:", tx.hash);
