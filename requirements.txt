@@ -14,4 +14,4 @@ eth-account>=0.13.0,<0.14.0
 
 # ML/AI (for DQN agent)
 numpy>=2.0.0,<3.0.0
-torch>=2.5.0,<3.0.0
+# torch will be installed separately in Dockerfile (CPU-only version)

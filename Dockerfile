@@ -7,7 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
+# Install PyTorch CPU-only first (much smaller than GPU version)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install other dependencies
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
