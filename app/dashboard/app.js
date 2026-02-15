@@ -715,16 +715,55 @@ if (forceTickBtn) {
 const finalizeBtn = $("finalizeBtn");
 if (finalizeBtn) {
   finalizeBtn.addEventListener("click", async () => {
-    if (!confirm("Finalize game?")) return;
-    const res = await fetch("/admin/finalize-game", {
+    if (!confirm("Finalize game and RESET world? This will clear all agents and start fresh.")) return;
+
+    // Finalize current game
+    const resFinalize = await fetch("/admin/finalize-game", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({}),
     });
-    const data = await res.json();
-    alert(`Game finalized at tick ${data.tick}. Survivors: ${data.survivors}`);
+    const dataFinalize = await resFinalize.json();
+
+    // Reset world
+    const resReset = await fetch("/admin/reset-world", {
+      method: "POST"
+    });
+    const dataReset = await resReset.json();
+
+    alert(`Game finalized at tick ${dataFinalize.tick}. Survivors: ${dataFinalize.survivors}.\n\nWorld has been reset! Click "Spawn Demo Agents" to start new game.`);
+    await refreshAll();
   });
 }
+
+// Add Spawn Demo Agents button functionality
+async function spawnDemoAgents() {
+  const res = await fetch("/admin/spawn-demo-agents?count=5", {
+    method: "POST"
+  });
+  const data = await res.json();
+  alert(`Spawned ${data.spawned} demo agents!\n\nAgents will now explore, trade, and fight in the world. Watch the Live Events panel!`);
+  await refreshAll();
+}
+
+// Auto-spawn demo agents if world is empty (for judges' convenience)
+async function checkAndAutoSpawn() {
+  try {
+    const res = await fetch("/world/status");
+    const data = await res.json();
+
+    // If no agents and tick is low (fresh world), auto-spawn
+    if (data.alive_agents === 0 && data.tick < 10) {
+      console.log("World is empty - auto-spawning demo agents for demo...");
+      await spawnDemoAgents();
+    }
+  } catch (e) {
+    console.error("Could not check world status:", e);
+  }
+}
+
+// Expose spawn function globally so it can be called from console or button
+window.spawnDemoAgents = spawnDemoAgents;
 
 // Zone popup close handlers
 const zoneClose = $("zonePopupClose");
@@ -754,4 +793,5 @@ async function loop() {
 
 // Init
 setupZones();
+checkAndAutoSpawn();  // Auto-spawn agents if world is empty
 loop();

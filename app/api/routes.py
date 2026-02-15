@@ -348,4 +348,79 @@ def make_router(app_state: AppState) -> APIRouter:
             await maybe_snapshot(app_state.conn, app_state.world, settings.snapshot_every_ticks)
         return {"ok": True, "tick": tick, "events": len(events)}
 
+    @r.post("/admin/spawn-demo-agents")
+    async def admin_spawn_demo_agents(count: int = 5) -> dict[str, Any]:
+        """Spawn demo agents for judges to see activity"""
+        import uuid
+        spawned = []
+
+        agent_names = ["Explorer_A", "Explorer_B", "Trader_A", "Fighter_A", "Survivor_A"]
+
+        for i in range(min(count, 10)):  # Max 10 agents
+            agent_id = f"demo_{uuid.uuid4().hex[:8]}"
+            api_key = uuid.uuid4().hex
+            name = agent_names[i] if i < len(agent_names) else f"Agent_{i+1}"
+
+            # Register agent in DB
+            async with app_state.db_lock:
+                await upsert_agent(
+                    app_state.conn,
+                    agent_id=agent_id,
+                    api_key=api_key,
+                    state={}
+                )
+                await insert_entry(
+                    app_state.conn,
+                    agent_id=agent_id,
+                    tx_ref=f"demo_{agent_id}",
+                    verified=True
+                )
+
+            # Add agent to world
+            async with app_state.world_lock:
+                app_state.world.add_agent(agent_id)
+                app_state.agent_names[agent_id] = name
+                tick = app_state.world.tick
+
+            # Log entry event
+            async with app_state.db_lock:
+                await insert_event(
+                    app_state.conn,
+                    tick=tick,
+                    type="AGENT_ENTERED",
+                    agent_id=agent_id,
+                    payload={"agent_id": agent_id, "name": name, "demo": True}
+                )
+
+            spawned.append({"agent_id": agent_id, "name": name})
+
+        return {"ok": True, "spawned": len(spawned), "agents": spawned}
+
+    @r.post("/admin/reset-world")
+    async def admin_reset_world() -> dict[str, Any]:
+        """Reset world to tick 0 with clean slate"""
+        from ..world.engine import WorldState
+
+        async with app_state.world_lock:
+            # Create fresh world
+            old_tick = app_state.world.tick
+            app_state.world = WorldState(size=settings.map_size)
+            app_state.pending_actions.clear()
+            app_state.agent_names.clear()
+
+        # Clear agents from DB (optional - or keep for history)
+        async with app_state.db_lock:
+            await app_state.conn.execute("DELETE FROM agents")
+            await app_state.conn.execute("DELETE FROM entries")
+            await app_state.conn.commit()
+
+            await insert_event(
+                app_state.conn,
+                tick=0,
+                type="WORLD_RESET",
+                payload={"old_tick": old_tick, "reset_at": 0}
+            )
+
+        return {"ok": True, "old_tick": old_tick, "new_tick": 0, "message": "World reset successfully"}
+
     return r
