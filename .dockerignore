@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+.venv
+venv
+*.egg-info
+
+# IDE
+.vscode
+.idea
+.claude
+
+# Data & Logs
+data/
+*.db
+*.sqlite
+*.log
+
+# Node
+node_modules
+contracts/node_modules
+contracts/artifacts
+contracts/cache
+
+# Docs
+README.md
+*.md
+
+# Deployment configs
+fly.toml
+railway.toml
+render.yaml
+.env
+.env.local
