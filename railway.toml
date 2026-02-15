@@ -1,8 +1,17 @@
 [build]
 builder = "dockerfile"
+dockerfilePath = "Dockerfile"
 
 [deploy]
-healthcheckPath = "/"
+startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+healthcheckPath = "/world/status"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 3
+
+# Railway will provide PORT automatically
+# Set these in Railway dashboard:
+# - CHAIN_RPC_URL
+# - STATE_ANCHOR_CONTRACT_ADDRESS
+# - ORACLE_PRIVATE_KEY
+# - ENTRY_FEE_CONTRACT_ADDRESS
